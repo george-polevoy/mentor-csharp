@@ -5,10 +5,12 @@ namespace WorkersAndQueues;
 public class Worker : BackgroundService, IMessageConsumer
 {
     private readonly ILogger<Worker> _logger;
+    private readonly Channel<Message> _channel = Channel.CreateBounded<Message>(new BoundedChannelOptions(10)
+    {
+        FullMode = BoundedChannelFullMode.DropOldest
+    });
 
-    private readonly Channel<Message> _channel = Channel.CreateBounded<Message>(10);
-
-    public Worker(ILogger<Worker> logger)
+public Worker(ILogger<Worker> logger)
     {
         _logger = logger;
     }
@@ -18,7 +20,6 @@ public class Worker : BackgroundService, IMessageConsumer
         await foreach (var msg in _channel.Reader.ReadAllAsync(stoppingToken))
         {
             _logger.LogInformation($"Worker received msg: {msg.Payload}");
-            _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
         }
     }
 
